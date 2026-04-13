@@ -123,11 +123,9 @@ pentest-mcp/
 Open a terminal on your **Kali machine** and run:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd YOUR_REPO_NAME
+git clone https://github.com/HACKER-ZIYAD/Automate-Petesting-MCP
+cd Automate-Petesting-MCP
 ```
-
-> Replace `YOUR_USERNAME/YOUR_REPO_NAME` with your actual GitHub repo path.
 
 ---
 
