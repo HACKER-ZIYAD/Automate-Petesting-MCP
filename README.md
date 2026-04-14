@@ -242,12 +242,6 @@ cd Automate-Petesting-MCP
 python -m venv venv
 ```
 
-**If you see a long red error about scripts being disabled**, PowerShell is blocking script execution. Fix it with:
-
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
 **Then activate the venv and install dependencies:**
 
 ```powershell
