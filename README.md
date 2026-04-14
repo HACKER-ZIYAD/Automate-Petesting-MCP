@@ -8,7 +8,12 @@
 > Let Claude plan, execute, and analyse penetration tests using real security tools — all from a chat window.
 
 ---
+## Security Warning
 
+> ⚠️ **Only use this tool against systems you own or have explicit written permission to test.**  
+> Unauthorised scanning and exploitation is illegal in most countries.  
+> This tool is intended for CTF challenges, home labs, and authorised penetration testing engagements only.
+---
 ## 📋 Table of Contents
 
 - [How It Works](#how-it-works)
@@ -32,8 +37,8 @@
 ## How It Works
 
 ```
-┌─────────────────────┐        MCP Protocol        ┌──────────────────────┐
-│                     │ ◄────────────────────────► │                      │
+┌─────────────────────┐        MCP Protocol         ┌──────────────────────┐
+│                     │ ◄────────────────────────►  │                      │
 │   Claude Desktop    │                             │   client.py          │
 │   (Your Machine)    │                             │   (MCP Server)       │
 │                     │                             │                      │
@@ -218,7 +223,7 @@ Choose the option that matches your setup:
 
 ---
 
-### Option A — Same Machine (Local)
+###  Machine (Local)
 
 If `client.py` and `server.py` are both running **on the same Kali machine**:
 
