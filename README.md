@@ -1,8 +1,8 @@
-# 🛡️ Automate-you're-Petesting-Using-MCP
+# 🛡️ Pentest MCP Server
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat&logo=flask&logoColor=white)
-License](https://img.shields.io/badge/License-MIT-green?style=flat)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat)
 
 > Connect Claude AI to your Kali Linux machine via MCP (Model Context Protocol).  
 > Let Claude plan, execute, and analyse penetration tests using real security tools — all from a chat window.
@@ -19,8 +19,6 @@ License](https://img.shields.io/badge/License-MIT-green?style=flat)
 - [Step 2 — Install Security Tools on Kali](#step-2--install-security-tools-on-kali)
 - [Step 3 — Start the API Server](#step-3--start-the-api-server)
 - [Step 4 — Set Up the MCP Client Machine](#step-4--set-up-the-mcp-client-machine)
-  - [Option A — Same Machine (Local)](#option-a--same-machine-local)
-  - [Option C — Remote Machine Direct (Not Recommended)](#option-c--remote-machine-direct-not-recommended)
 - [Step 5 — Windows Client Setup](#step-5--windows-client-setup)
 - [Step 6 — Connect Claude Desktop](#step-6--connect-claude-desktop)
 - [Step 7 — Verify Everything Works](#step-7--verify-everything-works)
@@ -51,7 +49,7 @@ License](https://img.shields.io/badge/License-MIT-green?style=flat)
                                                     │   on Kali Linux      │
                                                     └──────────┬───────────┘
                                                                │
-                                                      virtual machine (VM) Kali
+                                                     Virtual Machine (vm) Kali
                                                                │
                                         ┌──────────────────────▼──────────────────────┐
                                         │            Kali Linux Tools                 │
@@ -124,7 +122,7 @@ pentest-mcp/
 
 Open a terminal on your **Kali machine**.
 
-### Method A — With Virtual Environment (Recommended)
+### Method —  Virtual Environment (Recommended)
 
 ```bash
 git clone https://github.com/HACKER-ZIYAD/Automate-Petesting-MCP
@@ -137,10 +135,6 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 ```
-
-You should see version info for all three packages with no errors.
-
----
 
 ## Step 2 — Install Security Tools on Kali
 
@@ -169,36 +163,28 @@ sudo apt update && sudo apt install -y \
     wpscan
 ```
 
----
-
 ## Step 3 — Start the API Server
 
 Run `server.py` on your **Kali machine** inside the project folder.  
-If you used a venv in Step 1, activate it first: `source .venv/bin/activate`. Ensure there vertual machine is bridged Conection.
+If you used a venv in Step 1, activate it first: `source .venv/bin/activate`
 
 ```bash
 # Default — binds to localhost:5000 (secure, recommended)
 python3 server.py
 
 # Custom port
-python3 server.py --port 5000
+python3 server.py --port 8080
 
 # Bind to a specific IP and port
-python3 server.py --ip 192.168.1.100 --port 5000
+./server.py --ip 192.168.1.100 --port 8080
 
 # Allow connections from any network interface (use with caution)
 python3 server.py --ip 0.0.0.0
 
 # Debug mode — verbose logging
-./server.py --debug
+python3 server.py --debug
 ```
 
-You should see output like:
-
-```
-2025-xx-xx [INFO] Starting Custom Pentest API Server on 127.0.0.1:5000
- * Running on http://127.0.0.1:5000
-```
 
 **Keep this terminal open.** The API server must stay running during use.
 
@@ -225,6 +211,58 @@ Expected response:
 
 ---
 
+## Step 4 — Set Up the MCP Client Machine
+
+The MCP client (`client.py`) runs on the machine where Claude Desktop is installed.  
+Choose the option that matches your setup:
+
+---
+
+### Option A — Same Machine (Local)
+
+If `client.py` and `server.py` are both running **on the same Kali machine**:
+
+```bash
+# With venv
+source .venv/bin/activate
+python3 client.py --server http://127.0.0.1:5000
+
+```
+
+## Step 5 — Windows Client Setup
+
+If your client machine is **Windows**, follow these steps to set up the Python virtual environment correctly.
+
+**Open PowerShell and run:**
+
+```powershell
+git clone https://github.com/HACKER-ZIYAD/Automate-Petesting-MCP
+cd Automate-Petesting-MCP
+
+python -m venv venv
+```
+
+**If you see a long red error about scripts being disabled**, PowerShell is blocking script execution. Fix it with:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+**Then activate the venv and install dependencies:**
+
+```powershell
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**Run the client:**
+
+```powershell
+# Local (same machine as server)
+python client.py --server http://127.0.0.1:5000
+
+```
+---
 
 ## Step 6 — Connect Claude Desktop
 
@@ -267,7 +305,7 @@ Open the config file in any text editor and add the `mcpServers` block.
       "command": "C:\\path\\to\\repo\\venv\\Scripts\\python.exe",
       "args": [
         "C:\\path\\to\\repo\\client.py",
-        "--server", "http://127.0.0.1:5000"
+        "--server", "http://192.168.1.100:5000"
       ]
     }
   }
@@ -286,7 +324,7 @@ If you already have other MCP servers configured, add `pentest-mcp` alongside th
     "some-other-server": { "...": "..." },
     "pentest-mcp": {
       "command": "python3",
-      "args": ["/home/kali/pentest-mcp/client.py", "--server", "http://127.0.0.1:5000"]
+      "args": ["/home/kali/pentest-mcp/client.py", "--server", "http://192.168.1.100:5000"]
     }
   }
 }
