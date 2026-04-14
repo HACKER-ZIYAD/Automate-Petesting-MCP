@@ -51,7 +51,7 @@ License](https://img.shields.io/badge/License-MIT-green?style=flat)
                                                     │   on Kali Linux      │
                                                     └──────────┬───────────┘
                                                                │
-                                                       subprocess calls
+                                                      virtual machine (VM) Kali
                                                                │
                                         ┌──────────────────────▼──────────────────────┐
                                         │            Kali Linux Tools                 │
@@ -127,8 +127,8 @@ Open a terminal on your **Kali machine**.
 ### Method A — With Virtual Environment (Recommended)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd YOUR_REPO_NAME
+git clone https://github.com/HACKER-ZIYAD/Automate-Petesting-MCP
+cd Automate-Petesting-MCP
 
 # Create and activate a Python virtual environment
 python3 -m venv .venv
@@ -136,22 +136,6 @@ source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
-
-### Method B — Without Virtual Environment
-
-```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd YOUR_REPO_NAME
-pip install -r requirements.txt
-```
-
-> Replace `YOUR_USERNAME/YOUR_REPO_NAME` with your actual GitHub repo path.
-
-**Verify the install:**
-
-```bash
-pip show flask mcp requests
 ```
 
 You should see version info for all three packages with no errors.
@@ -185,41 +169,25 @@ sudo apt update && sudo apt install -y \
     wpscan
 ```
 
-> `dnsutils` provides the `dig` command.  
-> `net-tools` provides the `netstat` command.
-
-**Confirm all tools are found:**
-
-```bash
-which nmap dirb gobuster ffuf nikto whatweb wafw00f subfinder amass \
-      sqlmap whois dig curl netstat enum4linux hydra john msfconsole wpscan
-```
-
-Every line should print a path like `/usr/bin/nmap`. If any tool is missing, install it individually:
-
-```bash
-sudo apt install <toolname>
-```
-
 ---
 
 ## Step 3 — Start the API Server
 
 Run `server.py` on your **Kali machine** inside the project folder.  
-If you used a venv in Step 1, activate it first: `source .venv/bin/activate`
+If you used a venv in Step 1, activate it first: `source .venv/bin/activate`. Ensure there vertual machine is bridged Conection.
 
 ```bash
 # Default — binds to localhost:5000 (secure, recommended)
-./server.py
+python3 server.py
 
 # Custom port
-./server.py --port 8080
+python3 server.py --port 8080
 
 # Bind to a specific IP and port
-./server.py --ip 192.168.1.100 --port 8080
+python3 server.py --ip 192.168.1.100 --port 6060
 
 # Allow connections from any network interface (use with caution)
-./server.py --ip 0.0.0.0
+python3 server.py --ip 0.0.0.0
 
 # Debug mode — verbose logging
 ./server.py --debug
