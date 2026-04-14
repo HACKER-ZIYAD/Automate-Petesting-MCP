@@ -181,10 +181,10 @@ If you used a venv in Step 1, activate it first: `source .venv/bin/activate`. En
 python3 server.py
 
 # Custom port
-python3 server.py --port 8080
+python3 server.py --port 5000
 
 # Bind to a specific IP and port
-python3 server.py --ip 192.168.1.100 --port 6060
+python3 server.py --ip 192.168.1.100 --port 5000
 
 # Allow connections from any network interface (use with caution)
 python3 server.py --ip 0.0.0.0
@@ -192,14 +192,6 @@ python3 server.py --ip 0.0.0.0
 # Debug mode — verbose logging
 ./server.py --debug
 ```
-
-**`--ip` options explained:**
-
-| Value | Behaviour |
-|---|---|
-| `127.0.0.1` | Localhost only — only this machine can connect. **Secure. Default.** |
-| `0.0.0.0` | All network interfaces — any machine on the network can connect. **Dangerous.** |
-| `192.168.x.x` | Specific interface — only connections to that IP are accepted. |
 
 You should see output like:
 
@@ -233,127 +225,6 @@ Expected response:
 
 ---
 
-## Step 4 — Set Up the MCP Client Machine
-
-The MCP client (`client.py`) runs on the machine where Claude Desktop is installed.  
-Choose the option that matches your setup:
-
----
-
-### Option A — Same Machine (Local)
-
-If `client.py` and `server.py` are both running **on the same Kali machine**:
-
-```bash
-# With venv
-source .venv/bin/activate
-./client.py --server http://127.0.0.1:5000
-
-# Without venv
-python3 client.py --server http://127.0.0.1:5000
-```
-
-No extra configuration needed. Skip to [Step 6](#step-6--connect-claude-desktop).
-
----
-
-### Option B — Remote Machine via SSH Tunnel ✅ Recommended
-
-If `client.py` runs on a **separate machine** (your laptop/desktop) and `server.py` runs on a **remote Kali machine**, use an SSH tunnel. This is the most secure approach — traffic is encrypted and the Flask server stays on localhost only.
-
-**Terminal 1 — on your client machine, open the SSH tunnel:**
-
-```bash
-# Replace LINUX_IP with your Kali machine's IP address
-ssh -L 5000:localhost:5000 user@LINUX_IP
-
-# Keep connection alive (add this flag to prevent tunnel from dropping)
-ssh -L 5000:localhost:5000 -o ServerAliveInterval=60 user@LINUX_IP
-```
-
-Keep this terminal open. The tunnel is active as long as this SSH session is alive.
-
-**Terminal 2 — clone and run the client on your client machine:**
-
-```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd YOUR_REPO_NAME
-
-python3 -m venv .venv
-source .venv/bin/activate      # Linux / macOS
-pip install -r requirements.txt
-
-./client.py --server http://127.0.0.1:5000
-```
-
-Because of the SSH tunnel, `http://127.0.0.1:5000` on your local machine is forwarded securely to the remote Kali server.
-
----
-
-### Option C — Remote Machine Direct (Not Recommended)
-
-> ⚠️ **This exposes `server.py` directly over the network. Only use this in a trusted, isolated lab network. We strongly recommend Option B (SSH tunnel) instead.**
-
-On your **Kali machine**, start the server bound to its network IP:
-
-```bash
-./server.py --ip 0.0.0.0 --port 5000
-```
-
-On your **client machine**, run:
-
-```bash
-./client.py --server http://LINUX_IP:5000
-```
-
-Replace `LINUX_IP` with the actual IP of your Kali machine (find it with `ip a` or `hostname -I`).
-
----
-
-## Step 5 — Windows Client Setup
-
-If your client machine is **Windows**, follow these steps to set up the Python virtual environment correctly.
-
-**Open PowerShell and run:**
-
-```powershell
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd YOUR_REPO_NAME
-
-python -m venv venv
-```
-
-**If you see a long red error about scripts being disabled**, PowerShell is blocking script execution. Fix it with:
-
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
-**Then activate the venv and install dependencies:**
-
-```powershell
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-**Run the client:**
-
-```powershell
-# Local (same machine as server)
-python client.py --server http://127.0.0.1:5000
-
-# Remote via SSH tunnel — open the tunnel first in a separate terminal:
-# ssh -L 5000:localhost:5000 user@LINUX_IP
-python client.py --server http://127.0.0.1:5000
-```
-
-> **SSH tunnel on Windows:**  
-> Windows 10/11 includes OpenSSH by default. Open PowerShell or CMD and run:
-> ```powershell
-> ssh -L 5000:localhost:5000 user@LINUX_IP
-> ```
-
----
 
 ## Step 6 — Connect Claude Desktop
 
