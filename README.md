@@ -1,7 +1,8 @@
-# Automate-Petesting-MCP
+# 🛡️ Automate-you're-Petesting-Using-MCP
 
-
-# 🛡️ Custom Pentest MCP Server
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat&logo=flask&logoColor=white)
+License](https://img.shields.io/badge/License-MIT-green?style=flat)
 
 > Connect Claude AI to your Kali Linux machine via MCP (Model Context Protocol).  
 > Let Claude plan, execute, and analyse penetration tests using real security tools — all from a chat window.
@@ -14,11 +15,13 @@
 - [Tools Available](#tools-available)
 - [Prerequisites](#prerequisites)
 - [Project Structure](#project-structure)
-- [Step 1 — Clone the Repository](#step-1--clone-the-repository)
-- [Step 2 — Install Python Dependencies](#step-2--install-python-dependencies)
-- [Step 3 — Install Security Tools on Kali](#step-3--install-security-tools-on-kali)
-- [Step 4 — Start the API Server](#step-4--start-the-api-server)
-- [Step 5 — Configure the MCP Client](#step-5--configure-the-mcp-client)
+- [Step 1 — Install on Kali Linux (Server)](#step-1--install-on-kali-linux-server)
+- [Step 2 — Install Security Tools on Kali](#step-2--install-security-tools-on-kali)
+- [Step 3 — Start the API Server](#step-3--start-the-api-server)
+- [Step 4 — Set Up the MCP Client Machine](#step-4--set-up-the-mcp-client-machine)
+  - [Option A — Same Machine (Local)](#option-a--same-machine-local)
+  - [Option C — Remote Machine Direct (Not Recommended)](#option-c--remote-machine-direct-not-recommended)
+- [Step 5 — Windows Client Setup](#step-5--windows-client-setup)
 - [Step 6 — Connect Claude Desktop](#step-6--connect-claude-desktop)
 - [Step 7 — Verify Everything Works](#step-7--verify-everything-works)
 - [Usage Examples](#usage-examples)
@@ -38,19 +41,20 @@
 │                     │                             │                      │
 └─────────────────────┘                             └──────────┬───────────┘
                                                                │
-                                                        HTTP REST API
+                                                     HTTP REST API
+                                                  (localhost or SSH tunnel)
                                                                │
                                                     ┌──────────▼───────────┐
                                                     │                      │
                                                     │   server.py          │
                                                     │   (Flask API)        │
-                                                    │                      │
+                                                    │   on Kali Linux      │
                                                     └──────────┬───────────┘
                                                                │
-                                                        subprocess calls
+                                                       subprocess calls
                                                                │
                                         ┌──────────────────────▼──────────────────────┐
-                                        │         Kali Linux Tools                    │
+                                        │            Kali Linux Tools                 │
                                         │  nmap · dirb · gobuster · ffuf · nikto      │
                                         │  sqlmap · hydra · john · metasploit · ...   │
                                         └─────────────────────────────────────────────┘
@@ -93,17 +97,15 @@
 
 ## Prerequisites
 
-Before you begin, make sure you have:
-
 | Requirement | Where to Get It |
 |---|---|
 | **Kali Linux** (VM, bare metal, or WSL) | [kali.org/get-kali](https://www.kali.org/get-kali/) |
-| **Python 3.10+** on Kali | Pre-installed on Kali |
+| **Python 3.11+** on Kali | Pre-installed on Kali |
 | **Claude Desktop** on your main machine | [claude.ai/download](https://claude.ai/download) |
 | **Git** | Pre-installed on Kali |
 
-> **Note:** `server.py` and the security tools run **on your Kali machine**.  
-> `client.py` runs wherever Claude Desktop can reach it (can be the same Kali machine or a separate Linux/Mac/Windows host with Python).
+> `server.py` and all security tools run **on your Kali machine**.  
+> `client.py` runs on whichever machine has Claude Desktop — this can be the same Kali machine, or a separate Linux / macOS / Windows host.
 
 ---
 
@@ -112,37 +114,41 @@ Before you begin, make sure you have:
 ```
 pentest-mcp/
 ├── server.py          # Flask API server — runs on Kali, executes tools
-├── client.py          # MCP server — bridges Claude Desktop to the API
+├── client.py          # MCP server — bridges Claude Desktop to the Flask API
 └── requirements.txt   # Python dependencies (flask, mcp, requests)
 ```
 
 ---
 
-## Step 1 — Clone the Repository
+## Step 1 — Install on Kali Linux (Server)
 
-Open a terminal on your **Kali machine** and run:
+Open a terminal on your **Kali machine**.
 
-```bash
-git clone https://github.com/HACKER-ZIYAD/Automate-Petesting-MCP
-cd Automate-Petesting-MCP
-```
-
----
-
-## Step 2 — Install Python Dependencies
-
-Still inside the project folder, run:
+### Method A — With Virtual Environment (Recommended)
 
 ```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+
+# Create and activate a Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-This installs:
-- **flask** — runs the API server (`server.py`)
-- **mcp[cli]** — provides FastMCP to expose tools to Claude (`client.py`)
-- **requests** — lets `client.py` call `server.py` over HTTP
+### Method B — Without Virtual Environment
 
-Verify the install:
+```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+pip install -r requirements.txt
+```
+
+> Replace `YOUR_USERNAME/YOUR_REPO_NAME` with your actual GitHub repo path.
+
+**Verify the install:**
 
 ```bash
 pip show flask mcp requests
@@ -152,9 +158,9 @@ You should see version info for all three packages with no errors.
 
 ---
 
-## Step 3 — Install Security Tools on Kali
+## Step 2 — Install Security Tools on Kali
 
-Most tools are pre-installed on Kali. Run this to install any that are missing:
+Most tools are pre-installed on Kali. Run this block to install any that are missing:
 
 ```bash
 sudo apt update && sudo apt install -y \
@@ -179,49 +185,64 @@ sudo apt update && sudo apt install -y \
     wpscan
 ```
 
-> **`dnsutils`** provides the `dig` command.  
-> **`net-tools`** provides the `netstat` command.
+> `dnsutils` provides the `dig` command.  
+> `net-tools` provides the `netstat` command.
 
-Confirm all tools are found:
+**Confirm all tools are found:**
 
 ```bash
 which nmap dirb gobuster ffuf nikto whatweb wafw00f subfinder amass \
       sqlmap whois dig curl netstat enum4linux hydra john msfconsole wpscan
 ```
 
-Every line should print a path like `/usr/bin/nmap`. If any is missing, install it individually with `sudo apt install <toolname>`.
+Every line should print a path like `/usr/bin/nmap`. If any tool is missing, install it individually:
+
+```bash
+sudo apt install <toolname>
+```
 
 ---
 
-## Step 4 — Start the API Server
+## Step 3 — Start the API Server
 
-Run `server.py` on your Kali machine:
+Run `server.py` on your **Kali machine** inside the project folder.  
+If you used a venv in Step 1, activate it first: `source .venv/bin/activate`
 
 ```bash
-# Default — listens on localhost:5000 (safe, local only)
-python3 server.py
+# Default — binds to localhost:5000 (secure, recommended)
+./server.py
 
 # Custom port
-python3 server.py --port 8080
+./server.py --port 8080
 
-# Allow connections from other machines on the network
-# Use this if client.py runs on a different host than the Kali server
-python3 server.py --ip 0.0.0.0 --port 5000
+# Bind to a specific IP and port
+./server.py --ip 192.168.1.100 --port 8080
 
-# Debug mode (verbose logging)
-python3 server.py --debug
+# Allow connections from any network interface (use with caution)
+./server.py --ip 0.0.0.0
+
+# Debug mode — verbose logging
+./server.py --debug
 ```
 
-You should see:
+**`--ip` options explained:**
+
+| Value | Behaviour |
+|---|---|
+| `127.0.0.1` | Localhost only — only this machine can connect. **Secure. Default.** |
+| `0.0.0.0` | All network interfaces — any machine on the network can connect. **Dangerous.** |
+| `192.168.x.x` | Specific interface — only connections to that IP are accepted. |
+
+You should see output like:
 
 ```
 2025-xx-xx [INFO] Starting Custom Pentest API Server on 127.0.0.1:5000
  * Running on http://127.0.0.1:5000
 ```
 
-**Keep this terminal open.** The API server must stay running.
+**Keep this terminal open.** The API server must stay running during use.
 
-Test it in a second terminal:
+**Test it in a second terminal:**
 
 ```bash
 curl http://localhost:5000/health
@@ -235,9 +256,8 @@ Expected response:
   "message": "Custom Pentest MCP API Server is running",
   "tools_status": {
     "nmap": true,
-    "dirb": true,
     "gobuster": true,
-    ...
+    "ffuf": true
   },
   "all_tools_available": true
 }
@@ -245,27 +265,131 @@ Expected response:
 
 ---
 
-## Step 5 — Configure the MCP Client
+## Step 4 — Set Up the MCP Client Machine
 
-Open `client.py` and update the server URL if needed:
+The MCP client (`client.py`) runs on the machine where Claude Desktop is installed.  
+Choose the option that matches your setup:
 
-```python
-# Line 18 in client.py
-DEFAULT_KALI_SERVER = "http://localhost:5000"
+---
+
+### Option A — Same Machine (Local)
+
+If `client.py` and `server.py` are both running **on the same Kali machine**:
+
+```bash
+# With venv
+source .venv/bin/activate
+./client.py --server http://127.0.0.1:5000
+
+# Without venv
+python3 client.py --server http://127.0.0.1:5000
 ```
 
-| Scenario | Value to set |
-|---|---|
-| `client.py` and `server.py` on the **same machine** | `http://localhost:5000` |
-| `client.py` on your laptop, `server.py` on Kali VM | `http://KALI_IP:5000` (e.g. `http://192.168.1.50:5000`) |
+No extra configuration needed. Skip to [Step 6](#step-6--connect-claude-desktop).
 
-> Find your Kali IP with: `ip a` or `hostname -I`
+---
+
+### Option B — Remote Machine via SSH Tunnel ✅ Recommended
+
+If `client.py` runs on a **separate machine** (your laptop/desktop) and `server.py` runs on a **remote Kali machine**, use an SSH tunnel. This is the most secure approach — traffic is encrypted and the Flask server stays on localhost only.
+
+**Terminal 1 — on your client machine, open the SSH tunnel:**
+
+```bash
+# Replace LINUX_IP with your Kali machine's IP address
+ssh -L 5000:localhost:5000 user@LINUX_IP
+
+# Keep connection alive (add this flag to prevent tunnel from dropping)
+ssh -L 5000:localhost:5000 -o ServerAliveInterval=60 user@LINUX_IP
+```
+
+Keep this terminal open. The tunnel is active as long as this SSH session is alive.
+
+**Terminal 2 — clone and run the client on your client machine:**
+
+```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+
+python3 -m venv .venv
+source .venv/bin/activate      # Linux / macOS
+pip install -r requirements.txt
+
+./client.py --server http://127.0.0.1:5000
+```
+
+Because of the SSH tunnel, `http://127.0.0.1:5000` on your local machine is forwarded securely to the remote Kali server.
+
+---
+
+### Option C — Remote Machine Direct (Not Recommended)
+
+> ⚠️ **This exposes `server.py` directly over the network. Only use this in a trusted, isolated lab network. We strongly recommend Option B (SSH tunnel) instead.**
+
+On your **Kali machine**, start the server bound to its network IP:
+
+```bash
+./server.py --ip 0.0.0.0 --port 5000
+```
+
+On your **client machine**, run:
+
+```bash
+./client.py --server http://LINUX_IP:5000
+```
+
+Replace `LINUX_IP` with the actual IP of your Kali machine (find it with `ip a` or `hostname -I`).
+
+---
+
+## Step 5 — Windows Client Setup
+
+If your client machine is **Windows**, follow these steps to set up the Python virtual environment correctly.
+
+**Open PowerShell and run:**
+
+```powershell
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+
+python -m venv venv
+```
+
+**If you see a long red error about scripts being disabled**, PowerShell is blocking script execution. Fix it with:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+**Then activate the venv and install dependencies:**
+
+```powershell
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**Run the client:**
+
+```powershell
+# Local (same machine as server)
+python client.py --server http://127.0.0.1:5000
+
+# Remote via SSH tunnel — open the tunnel first in a separate terminal:
+# ssh -L 5000:localhost:5000 user@LINUX_IP
+python client.py --server http://127.0.0.1:5000
+```
+
+> **SSH tunnel on Windows:**  
+> Windows 10/11 includes OpenSSH by default. Open PowerShell or CMD and run:
+> ```powershell
+> ssh -L 5000:localhost:5000 user@LINUX_IP
+> ```
 
 ---
 
 ## Step 6 — Connect Claude Desktop
 
-Claude Desktop reads MCP server configuration from a JSON file.
+Claude Desktop reads MCP server configuration from a JSON file on your machine.
 
 ### Find the config file
 
@@ -277,7 +401,9 @@ Claude Desktop reads MCP server configuration from a JSON file.
 
 ### Edit the config file
 
-Open the config file in any text editor and add the `mcpServers` block:
+Open the config file in any text editor and add the `mcpServers` block.
+
+**Linux / macOS:**
 
 ```json
 {
@@ -285,26 +411,43 @@ Open the config file in any text editor and add the `mcpServers` block:
     "pentest-mcp": {
       "command": "python3",
       "args": [
-        "/full/path/to/your/repo/client.py",
-        "--server", "http://localhost:5000"
+        "/full/path/to/repo/client.py",
+        "--server", "http://127.0.0.1:5000"
       ]
     }
   }
 }
 ```
 
-> **Important:** Replace `/full/path/to/your/repo/client.py` with the actual absolute path.  
-> Example: `/home/kali/pentest-mcp/client.py`
-
-If you already have other MCP servers in the config, add `pentest-mcp` alongside them:
+**Windows:**
 
 ```json
 {
   "mcpServers": {
-    "existing-server": { ... },
+    "pentest-mcp": {
+      "command": "C:\\path\\to\\repo\\venv\\Scripts\\python.exe",
+      "args": [
+        "C:\\path\\to\\repo\\client.py",
+        "--server", "http://127.0.0.1:5000"
+      ]
+    }
+  }
+}
+```
+
+> **Important:** Always use the **full absolute path** to `client.py`.  
+> Linux example: `/home/kali/pentest-mcp/client.py`  
+> Windows example: `C:\\Users\\YourName\\pentest-mcp\\client.py`
+
+If you already have other MCP servers configured, add `pentest-mcp` alongside them:
+
+```json
+{
+  "mcpServers": {
+    "some-other-server": { "...": "..." },
     "pentest-mcp": {
       "command": "python3",
-      "args": ["/home/kali/pentest-mcp/client.py", "--server", "http://localhost:5000"]
+      "args": ["/home/kali/pentest-mcp/client.py", "--server", "http://127.0.0.1:5000"]
     }
   }
 }
@@ -312,7 +455,8 @@ If you already have other MCP servers in the config, add `pentest-mcp` alongside
 
 ### Restart Claude Desktop
 
-Fully quit and reopen Claude Desktop for the config to take effect.
+Fully quit and reopen Claude Desktop for the config to take effect.  
+On macOS: `Cmd+Q` → reopen. On Windows: right-click taskbar icon → Quit → reopen.
 
 ---
 
@@ -324,27 +468,27 @@ In Claude Desktop, open a new chat and type:
 Check the health of the pentest server
 ```
 
-Claude should call `server_health` and respond with a list of available tools and their status.
+Claude should call `server_health` and show a table of all tools and their availability.
 
-Then try a simple test:
+Then try a real test:
 
 ```
 Run a whois lookup on example.com
 ```
 
-Claude will call `whois_lookup` and return the domain registration information.
+Claude will call `whois_lookup` and return the domain registration info.
 
-If both work, your full setup is complete.
+If both work — your full setup is complete. ✅
 
 ---
 
 ## Usage Examples
 
-Once connected, just talk to Claude naturally. Here are some example prompts:
+Once connected, talk to Claude naturally. Here are example prompts:
 
 **Port Scanning**
 ```
-Scan 10.10.10.5 for open ports and services
+Scan 10.10.10.5 for open ports and running services
 ```
 
 **Subdomain Enumeration**
@@ -352,9 +496,9 @@ Scan 10.10.10.5 for open ports and services
 Find all subdomains of target.com using subfinder and amass
 ```
 
-**Web Recon**
+**Web Fingerprinting + WAF Detection**
 ```
-Fingerprint the technology stack on http://10.10.10.5 using whatweb and check if there is a WAF
+Fingerprint the tech stack on http://10.10.10.5 with whatweb and check for a WAF with wafw00f
 ```
 
 **Directory Brute-Force**
@@ -367,9 +511,9 @@ Run gobuster on http://10.10.10.5 using the common.txt wordlist
 Fuzz http://10.10.10.5/FUZZ for hidden directories, filter out 404 responses
 ```
 
-**SQL Injection**
+**SQL Injection Testing**
 ```
-Test http://10.10.10.5/login.php?id=1 for SQL injection using sqlmap
+Test http://10.10.10.5/login.php?id=1 for SQL injection with sqlmap
 ```
 
 **Password Cracking**
@@ -380,11 +524,11 @@ Crack the hashes in /home/kali/hashes.txt using rockyou.txt with john
 **Full Recon Workflow**
 ```
 Do a full recon on 10.10.10.5:
-1. Nmap scan all ports
-2. Detect technologies with whatweb
+1. Nmap all ports
+2. Detect tech with whatweb
 3. Brute-force directories with gobuster
 4. Scan for web vulnerabilities with nikto
-Summarise the findings when done.
+Give me a summary of all findings at the end.
 ```
 
 ---
@@ -395,7 +539,7 @@ Summarise the findings when done.
 
 | Argument | Default | Description |
 |---|---|---|
-| `--ip` | `127.0.0.1` | IP address to bind (use `0.0.0.0` for network access) |
+| `--ip` | `127.0.0.1` | IP to bind (`127.0.0.1` = local only, `0.0.0.0` = all interfaces) |
 | `--port` | `5000` | Port to listen on |
 | `--debug` | off | Enable verbose debug logging |
 
@@ -403,7 +547,7 @@ Summarise the findings when done.
 
 | Argument | Default | Description |
 |---|---|---|
-| `--server` | `http://localhost:5000` | URL of the Flask API server |
+| `--server` | `http://localhost:5000` | Full URL of the Flask API server |
 | `--timeout` | `300` | Request timeout in seconds (5 min) |
 | `--debug` | off | Enable verbose debug logging |
 
@@ -419,55 +563,65 @@ Summarise the findings when done.
 ## Troubleshooting
 
 **Claude Desktop does not show the pentest tools**
-- Make sure `server.py` is running and accessible
-- Check the absolute path to `client.py` in the Claude Desktop config
-- Fully restart Claude Desktop (quit completely, not just close the window)
-- Run `client.py` manually in a terminal to see startup errors:
+- Make sure `server.py` is running and reachable
+- Double-check the absolute path to `client.py` in the Claude Desktop config
+- Fully quit and reopen Claude Desktop (not just close the window)
+- Test `client.py` manually in a terminal to see any startup errors:
   ```bash
   python3 client.py --debug
   ```
 
-**`curl http://localhost:5000/health` fails / connection refused**
+**`curl http://localhost:5000/health` returns connection refused**
 - `server.py` is not running — start it with `python3 server.py`
-- Check if something else is using port 5000: `sudo ss -tlnp | grep 5000`
+- Check if port 5000 is already in use: `sudo ss -tlnp | grep 5000`
 - Try a different port: `python3 server.py --port 8080`
 
-**Tool shows `false` in health check**
-- The tool is not installed on Kali
-- Install it: `sudo apt install <toolname>`
-- For `dig` install `dnsutils`, for `netstat` install `net-tools`
+**SSH tunnel drops or disconnects**
+- Add `-o ServerAliveInterval=60` to keep the tunnel alive:
+  ```bash
+  ssh -L 5000:localhost:5000 -o ServerAliveInterval=60 user@LINUX_IP
+  ```
 
-**`mcp` module not found when running client.py**
+**Tool shows `false` in health check**
+- That tool is not installed — install it: `sudo apt install <toolname>`
+- For `dig`: `sudo apt install dnsutils`
+- For `netstat`: `sudo apt install net-tools`
+
+**`mcp` module not found**
 ```bash
 pip install "mcp[cli]"
 ```
 
-**Timeout errors on long scans (nmap, amass, metasploit)**
-- Increase the timeout when starting `client.py`:
-  ```bash
-  python3 client.py --timeout 600
-  ```
-- Or set `COMMAND_TIMEOUT` in `server.py` to a higher value (default is 180 seconds)
+**Timeout errors on long-running scans (nmap, amass, metasploit)**
+```bash
+python3 client.py --server http://127.0.0.1:5000 --timeout 600
+```
 
-**Permission denied running nmap or metasploit**
-- Some nmap scan types require root:
-  ```bash
-  sudo python3 server.py
-  ```
+**Permission denied running nmap SYN scans or metasploit**
+```bash
+sudo python3 server.py
+```
+
+**Windows — red error when activating venv**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\venv\Scripts\Activate.ps1
+```
 
 ---
 
 ## Security Warning
 
 > ⚠️ **Only use this tool against systems you own or have explicit written permission to test.**  
-> Unauthorised scanning or exploitation is illegal in most countries.  
+> Unauthorised scanning and exploitation is illegal in most countries.  
 > This tool is intended for CTF challenges, home labs, and authorised penetration testing engagements only.
 
-**Keep `server.py` on localhost (`127.0.0.1`) unless you fully understand the network exposure.**  
-Binding to `0.0.0.0` exposes a remote code execution surface on your network.
+- **Always prefer `--ip 127.0.0.1` (default).** Keeps the API server accessible from localhost only.
+- **Use SSH tunnels for remote setups.** Tunnelling encrypts traffic and avoids exposing the server to the network.
+- **Never bind to `0.0.0.0` on a public or shared network.** Doing so exposes a remote code execution surface to anyone on that network.
 
 ---
 
 ## License
 
-This project is for educational and authorised security testing purposes only.
+MIT — This project is for educational and authorised security testing purposes only.
